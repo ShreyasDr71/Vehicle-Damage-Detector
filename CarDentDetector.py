@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, Response
 import os
 from werkzeug.utils import secure_filename
 import cv2
@@ -84,6 +84,32 @@ def process_video(file_path):
     out.release()
     return output_path
 
+# Live feed generator
+def generate_frames():
+    cap = cv2.VideoCapture(0)
+    while True:
+        success, frame = cap.read()
+        if not success:
+            break
+        else:
+            results = model(frame)
+            for r in results:
+                boxes = r.boxes
+                for box in boxes:
+                    x1, y1, x2, y2 = map(int, box.xyxy[0])
+                    w, h = x2 - x1, y2 - y1
+                    conf = math.ceil(box.conf[0] * 100) / 100
+                    cls = int(box.cls[0])
+
+                    if conf > 0.3:
+                        cvzone.cornerRect(frame, (x1, y1, w, h), t=2)
+                        cvzone.putTextRect(frame, f'{class_labels[cls]} {conf}', (x1, y1 - 10), scale=0.8, thickness=1, colorR=(255, 0, 0))
+            
+            _, buffer = cv2.imencode('.jpg', frame)
+            frame = buffer.tobytes()
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+
 # Routes
 @app.route('/')
 def index():
@@ -119,6 +145,10 @@ def upload_file():
         )
 
     return redirect(request.url)
+
+@app.route('/live_feed')
+def live_feed():
+    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 if __name__ == '__main__':
     app.run(debug=True)

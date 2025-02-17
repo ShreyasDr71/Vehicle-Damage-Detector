@@ -35,8 +35,19 @@
             background: #0984e3;
             color: white;
             padding: 10px 20px;
+            border: none;
             border-radius: 5px;
             cursor: pointer;
+            margin: 5px;
+        }
+        .live-feed {
+            display: block;
+            margin-top: 10px;
+            padding: 10px 20px;
+            background: #d63031;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
         }
     </style>
 </head>
@@ -45,8 +56,9 @@
         <h1>Car Dent Detector</h1>
         <form action="/upload" method="POST" enctype="multipart/form-data">
             <input type="file" name="file" accept=".png, .jpg, .jpeg, .mp4" required>
-            <button type="submit">Upload</button>
+            <button type="submit">Upload Image/Video</button>
         </form>
+        <a href="{{ url_for('live_feed') }}" class="live-feed">Live Feed</a>
     </div>
 </body>
 </html>
